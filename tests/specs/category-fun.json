@@ -1,0 +1,18 @@
+[
+  {
+    "name": "Fun category without selfie asks for selfie",
+    "steps": [
+      {
+        "send": { "callback": "category:fun" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📸 Send me a selfie first, and I'll apply the Fun style to it!"
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
