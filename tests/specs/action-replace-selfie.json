@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Upload New Selfie",
+    "steps": [
+      {
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Replace current selfie with new photo"
+            }
+          }
+        ],
+        "send": {
+          "callback": "action:replace_selfie"
+        }
+      }
+    ]
+  }
+]
