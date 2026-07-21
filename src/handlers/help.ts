@@ -11,7 +11,7 @@ const HELP =
   "2. Pick a style from the menu\n" +
   "3. Choose how many images to generate\n" +
   "4. Download your styled images!\n\n" +
-  "You get 5 free credits to start. Each image costs 1 credit.";
+  "It's completely free — generate as many as you like.";
 
 const backToMenu = inlineKeyboard([[inlineButton("⬅️ Back to menu", "menu:main")]]);
 
