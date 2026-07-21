@@ -1,19 +1,17 @@
 [
   {
-    "name": "Love",
+    "name": "Love category without selfie asks for selfie",
     "steps": [
       {
+        "send": { "callback": "category:love" },
         "expect": [
           {
             "method": "sendMessage",
             "payload": {
-              "text": "Apply 'Love' theme template to current selfie"
+              "text": "📸 Send me a selfie first, and I'll apply the Love style to it!"
             }
           }
-        ],
-        "send": {
-          "callback": "category:love"
-        }
+        ]
       }
     ]
   }

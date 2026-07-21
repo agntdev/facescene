@@ -1,19 +1,17 @@
 [
   {
-    "name": "/prompt",
+    "name": "/prompt asks for custom text input",
     "steps": [
       {
+        "send": { "text": "/prompt" },
         "expect": [
           {
             "method": "sendMessage",
             "payload": {
-              "text": "Enter custom text prompt for image generation"
+              "text": "✍️ Type a custom prompt for your image. Be creative! For example:\n\n\"A dreamy portrait with soft pink lighting and flowers\""
             }
           }
-        ],
-        "send": {
-          "text": "/prompt"
-        }
+        ]
       }
     ]
   }
