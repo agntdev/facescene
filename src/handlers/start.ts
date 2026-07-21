@@ -20,16 +20,14 @@ for (const cat of CATEGORIES) {
   registerMainMenuItem(cat);
 }
 
-// Also register the Upload New Selfie and Credits buttons.
+// Also register the Upload New Selfie button.
 registerMainMenuItem({ label: "📷 Upload Selfie", data: "action:replace_selfie", order: 5 });
-registerMainMenuItem({ label: "💰 Credits", data: "credits:show", order: 6 });
 
 const WELCOME = "👋 Welcome to SelfieStyle! Upload a selfie, then pick a style below to transform it.";
 
 const composer = new Composer<Ctx>();
 
 composer.command("start", async (ctx) => {
-  // Ensure user profile exists
   const store = getDomainStore();
   const userId = ctx.from?.id;
   if (userId) {
@@ -39,7 +37,6 @@ composer.command("start", async (ctx) => {
         telegram_id: userId,
         display_name: ctx.from?.first_name ?? "User",
         consent_timestamp: Date.now(),
-        credit_balance: 5, // 5 free credits on signup
       });
     }
   }
@@ -47,7 +44,6 @@ composer.command("start", async (ctx) => {
   await ctx.reply(WELCOME, { reply_markup: mainMenuKeyboard(3) });
 });
 
-// "Back to menu" — re-render the main menu in place from any sub-view.
 composer.callbackQuery("menu:main", async (ctx) => {
   await ctx.answerCallbackQuery();
   ctx.session.step = "idle";

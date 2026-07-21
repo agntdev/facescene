@@ -1,6 +1,6 @@
 [
   {
-    "name": "Credits menu shows balance and purchase options",
+    "name": "Credits menu shows free service message",
     "steps": [
       {
         "send": { "callback": "credits:show" },
@@ -8,7 +8,7 @@
           {
             "method": "sendMessage",
             "payload": {
-              "text": "💰 Your balance: 5 credits\n\nEach image costs 1 credit. Buy more below:"
+              "text": "🎉 SelfieStyle is completely free to use!\n\nGenerate as many images as you like — no credits, no limits."
             }
           }
         ]

@@ -10,7 +10,6 @@ export interface UserProfile {
   telegram_id: number;
   display_name: string;
   consent_timestamp: number;
-  credit_balance: number;
 }
 
 export interface GenerationJob {

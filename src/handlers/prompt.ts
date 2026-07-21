@@ -17,7 +17,6 @@ composer.command("prompt", async (ctx) => {
   );
 });
 
-// Handle custom prompt text input
 composer.on("message:text", async (ctx, next) => {
   if (ctx.session.step !== "awaiting_prompt") return next();
 
@@ -28,7 +27,7 @@ composer.on("message:text", async (ctx, next) => {
   }
 
   ctx.session.customPrompt = prompt;
-  ctx.session.selectedCategory = undefined; // custom prompt overrides category
+  ctx.session.selectedCategory = undefined;
   ctx.session.step = "awaiting_image_count";
 
   await ctx.reply(
