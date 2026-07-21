@@ -21,8 +21,17 @@ composer.callbackQuery("credits:show", async (ctx) => {
   if (!userId) return;
 
   const store = getDomainStore();
-  const profile = await store.getUserProfile(userId);
-  const balance = profile?.credit_balance ?? 0;
+  let profile = await store.getUserProfile(userId);
+  if (!profile) {
+    profile = {
+      telegram_id: userId,
+      display_name: ctx.from?.first_name ?? "User",
+      consent_timestamp: Date.now(),
+      credit_balance: 5,
+    };
+    await store.setUserProfile(userId, profile);
+  }
+  const balance = profile.credit_balance;
 
   const packButtons = CREDIT_PACKS.map((pack) => [
     inlineButton(pack.label, `credits:buy:${pack.credits}`),
