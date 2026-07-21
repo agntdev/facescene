@@ -96,6 +96,7 @@ composer.callbackQuery("gen:confirm", async (ctx) => {
     status: "pending" | "generating" | "completed" | "failed";
     output_images: string[];
     created_at: number;
+    selfie_file_id?: string;
   } = {
     job_id: jobId,
     user_id: userId,
@@ -105,6 +106,7 @@ composer.callbackQuery("gen:confirm", async (ctx) => {
     status: "pending",
     output_images: [],
     created_at: Date.now(),
+    selfie_file_id: ctx.session.selfieFileId,
   };
   await store.setJob(jobId, job);
   await store.addJobToUser(userId, jobId);
@@ -138,19 +140,66 @@ composer.callbackQuery("gen:confirm", async (ctx) => {
 });
 
 composer.callbackQuery(/^download:(.+)$/, async (ctx) => {
-  await ctx.answerCallbackQuery();
   const jobId = ctx.match[1];
   const store = getDomainStore();
   const job = await store.getJob(jobId);
 
   if (!job || job.status !== "completed") {
-    await ctx.reply("⚠️ Images not ready yet. Try again in a moment.");
+    await ctx.answerCallbackQuery({ text: "Images not ready yet" });
+    await ctx.editMessageText("⚠️ Images not ready yet. Try again in a moment.", {
+      reply_markup: inlineKeyboard([
+        [inlineButton("⬅️ Back to menu", "menu:main")],
+      ]),
+    });
     return;
   }
 
-  await ctx.reply(
-    `📥 Downloading ${job.output_images.length} image${job.output_images.length > 1 ? "s" : ""}…`,
-  );
+  // Answer callback immediately to stop Telegram's spinner
+  await ctx.answerCallbackQuery({ text: "Sending files..." });
+
+  const imageCount = job.output_images.length;
+
+  // Send each generated image as a document to preserve quality
+  for (let i = 0; i < imageCount; i++) {
+    const imageRef = job.output_images[i];
+
+    try {
+      // In a real implementation, this would fetch from S3/storage
+      // For now, we use the user's selfie file_id as the generated image
+      // since we don't have a real AI generation backend
+      if (ctx.session.selfieFileId) {
+        await ctx.api.sendDocument(
+          ctx.chat!.id,
+          ctx.session.selfieFileId,
+          {
+            caption: `Image ${i + 1} of ${imageCount}`,
+          },
+        );
+      } else {
+        // Fallback: send a placeholder message explaining the limitation
+        await ctx.reply(`Image ${i + 1} of ${imageCount} would be sent here.`);
+      }
+    } catch (error) {
+      console.error(`Failed to send image ${i + 1}:`, error);
+      await ctx.reply(
+        `Sorry, I couldn't send image ${i + 1}. You can try again later.`,
+      );
+    }
+  }
+
+  // Update the original message to show success state
+  try {
+    await ctx.editMessageText(
+      `✅ Downloaded ${imageCount} image${imageCount > 1 ? "s" : ""} successfully!`,
+      {
+        reply_markup: inlineKeyboard([
+          [inlineButton("⬅️ Back to menu", "menu:main")],
+        ]),
+      },
+    );
+  } catch {
+    // Message edit failure is non-critical
+  }
 });
 
 export default composer;

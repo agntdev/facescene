@@ -21,6 +21,7 @@ export interface GenerationJob {
   status: "pending" | "generating" | "completed" | "failed";
   output_images: string[];
   created_at: number;
+  selfie_file_id?: string;
 }
 
 export interface CreditTransaction {
