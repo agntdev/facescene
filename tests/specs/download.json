@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Download button with missing job shows error",
+    "steps": [
+      {
+        "send": { "callback": "download:test_job_123" },
+        "expect": [
+          {
+            "method": "answerCallbackQuery",
+            "payload": { "text": "Images not ready yet" }
+          },
+          {
+            "method": "editMessageText",
+            "payload": { "text": "⚠️ Images not ready yet. Try again in a moment." }
+          }
+        ]
+      }
+    ]
+  }
+]
