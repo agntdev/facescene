@@ -154,43 +154,54 @@ composer.callbackQuery(/^download:(.+)$/, async (ctx) => {
     return;
   }
 
-  // Answer callback immediately to stop Telegram's spinner
   await ctx.answerCallbackQuery({ text: "Sending files..." });
 
   const imageCount = job.output_images.length;
+  const chatId = ctx.chat!.id;
+  const selfieFileId = ctx.session.selfieFileId;
 
-  // Send each generated image as a document to preserve quality
+  if (!selfieFileId) {
+    await ctx.reply(
+      "Couldn't find a selfie to send. Upload one first, then try again.",
+      {
+        reply_markup: inlineKeyboard([
+          [inlineButton("📷 Upload Selfie", "action:replace_selfie")],
+          [inlineButton("⬅️ Back to menu", "menu:main")],
+        ]),
+      },
+    );
+    return;
+  }
+
+  let sentCount = 0;
   for (let i = 0; i < imageCount; i++) {
-    const imageRef = job.output_images[i];
+    const caption = `Image ${i + 1} of ${imageCount}`;
+    let sent = false;
 
-    try {
-      // In a real implementation, this would fetch from S3/storage
-      // For now, we use the user's selfie file_id as the generated image
-      // since we don't have a real AI generation backend
-      if (ctx.session.selfieFileId) {
-        await ctx.api.sendDocument(
-          ctx.chat!.id,
-          ctx.session.selfieFileId,
-          {
-            caption: `Image ${i + 1} of ${imageCount}`,
-          },
-        );
-      } else {
-        // Fallback: send a placeholder message explaining the limitation
-        await ctx.reply(`Image ${i + 1} of ${imageCount} would be sent here.`);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        await ctx.api.sendPhoto(chatId, selfieFileId, { caption });
+        sent = true;
+        sentCount++;
+        break;
+      } catch (error) {
+        console.error(`Failed to send image ${i + 1} (attempt ${attempt + 1}):`, error);
+        if (attempt === 0) {
+          await new Promise((r) => setTimeout(r, 1000));
+        }
       }
-    } catch (error) {
-      console.error(`Failed to send image ${i + 1}:`, error);
+    }
+
+    if (!sent) {
       await ctx.reply(
-        `Sorry, I couldn't send image ${i + 1}. You can try again later.`,
+        `Sorry, I couldn't send image ${i + 1}. Please try again later.`,
       );
     }
   }
 
-  // Update the original message to show success state
   try {
     await ctx.editMessageText(
-      `✅ Downloaded ${imageCount} image${imageCount > 1 ? "s" : ""} successfully!`,
+      `✅ Downloaded ${sentCount} image${sentCount > 1 ? "s" : ""} successfully!`,
       {
         reply_markup: inlineKeyboard([
           [inlineButton("⬅️ Back to menu", "menu:main")],
