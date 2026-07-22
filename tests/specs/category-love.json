@@ -14,5 +14,21 @@
         ]
       }
     ]
+  },
+  {
+    "name": "Generate confirmation without selfie shows error",
+    "steps": [
+      {
+        "send": { "callback": "gen:confirm" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Couldn't find a selfie to process. Upload one first, then try again."
+            }
+          }
+        ]
+      }
+    ]
   }
 ]

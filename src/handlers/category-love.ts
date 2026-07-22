@@ -2,6 +2,7 @@ import { Composer } from "grammy";
 import type { Ctx } from "../bot.js";
 import { inlineButton, inlineKeyboard } from "../toolkit/index.js";
 import { getDomainStore, createJobId } from "../storage.js";
+import { generateImages, downloadTelegramFile } from "../services/generation.js";
 
 const CATEGORY_NAMES: Record<string, string> = {
   love: "Love",
@@ -85,6 +86,20 @@ composer.callbackQuery("gen:confirm", async (ctx) => {
 
   const store = getDomainStore();
   const count = ctx.session.imageCount ?? 1;
+  const selfieFileId = ctx.session.selfieFileId;
+
+  if (!selfieFileId) {
+    await ctx.reply(
+      "Couldn't find a selfie to process. Upload one first, then try again.",
+      {
+        reply_markup: inlineKeyboard([
+          [inlineButton("📷 Upload Selfie", "action:replace_selfie")],
+          [inlineButton("⬅️ Back to menu", "menu:main")],
+        ]),
+      },
+    );
+    return;
+  }
 
   const jobId = createJobId();
   const job: {
@@ -103,10 +118,10 @@ composer.callbackQuery("gen:confirm", async (ctx) => {
     category: ctx.session.selectedCategory,
     custom_prompt: ctx.session.customPrompt,
     image_count: count,
-    status: "pending",
+    status: "generating",
     output_images: [],
     created_at: Date.now(),
-    selfie_file_id: ctx.session.selfieFileId,
+    selfie_file_id: selfieFileId,
   };
   await store.setJob(jobId, job);
   await store.addJobToUser(userId, jobId);
@@ -114,8 +129,9 @@ composer.callbackQuery("gen:confirm", async (ctx) => {
   ctx.session.jobId = jobId;
   ctx.session.step = "idle";
 
+  // Show loading state
   await ctx.reply(
-    `⏳ Generating your images… This may take a moment.\n\nJob ID: ${jobId.slice(0, 12)}…`,
+    `⏳ Generating your images… This may take a moment.`,
     {
       reply_markup: inlineKeyboard([
         [inlineButton("⬅️ Back to menu", "menu:main")],
@@ -123,20 +139,68 @@ composer.callbackQuery("gen:confirm", async (ctx) => {
     },
   );
 
-  job.status = "completed";
-  job.output_images = Array.from({ length: count }, (_, i) => `output_${jobId}_${i}.jpg`);
-  await store.setJob(jobId, job);
+  try {
+    // Get bot token for file downloads
+    const botToken = process.env.BOT_TOKEN;
+    if (!botToken) {
+      throw new Error("BOT_TOKEN not configured");
+    }
 
-  await ctx.reply(
-    `✅ Your ${count} image${count > 1 ? "s are" : " is"} ready!\n\n` +
-    `Tap below to download.`,
-    {
-      reply_markup: inlineKeyboard([
-        [inlineButton("📥 Download images", `download:${jobId}`)],
-        [inlineButton("⬅️ Back to menu", "menu:main")],
-      ]),
-    },
-  );
+    // Generate images using AI
+    const result = await generateImages(
+      selfieFileId,
+      ctx.session.selectedCategory,
+      ctx.session.customPrompt,
+      count,
+      (fileId) => downloadTelegramFile(fileId, botToken),
+    );
+
+    if (result.success && result.imageUrls.length > 0) {
+      // Store generated image URLs
+      job.status = "completed";
+      job.output_images = result.imageUrls;
+      await store.setJob(jobId, job);
+
+      await ctx.reply(
+        `✅ Your ${count} image${count > 1 ? "s are" : " is"} ready!\n\n` +
+        `Tap below to download.`,
+        {
+          reply_markup: inlineKeyboard([
+            [inlineButton("📥 Download images", `download:${jobId}`)],
+            [inlineButton("⬅️ Back to menu", "menu:main")],
+          ]),
+        },
+      );
+    } else {
+      // Generation failed
+      job.status = "failed";
+      await store.setJob(jobId, job);
+
+      await ctx.reply(
+        `❌ ${result.error ?? "Image generation failed. Please try again with a different style."}`,
+        {
+          reply_markup: inlineKeyboard([
+            [inlineButton("🔄 Try again", "gen:confirm")],
+            [inlineButton("⬅️ Back to menu", "menu:main")],
+          ]),
+        },
+      );
+    }
+  } catch (error) {
+    console.error("[gen:confirm] Generation failed:", error);
+    job.status = "failed";
+    await store.setJob(jobId, job);
+
+    await ctx.reply(
+      "❌ Something went wrong during generation. Please try again later.",
+      {
+        reply_markup: inlineKeyboard([
+          [inlineButton("🔄 Try again", "gen:confirm")],
+          [inlineButton("⬅️ Back to menu", "menu:main")],
+        ]),
+      },
+    );
+  }
 });
 
 composer.callbackQuery(/^download:(.+)$/, async (ctx) => {
@@ -158,29 +222,17 @@ composer.callbackQuery(/^download:(.+)$/, async (ctx) => {
 
   const imageCount = job.output_images.length;
   const chatId = ctx.chat!.id;
-  const selfieFileId = ctx.session.selfieFileId;
-
-  if (!selfieFileId) {
-    await ctx.reply(
-      "Couldn't find a selfie to send. Upload one first, then try again.",
-      {
-        reply_markup: inlineKeyboard([
-          [inlineButton("📷 Upload Selfie", "action:replace_selfie")],
-          [inlineButton("⬅️ Back to menu", "menu:main")],
-        ]),
-      },
-    );
-    return;
-  }
 
   let sentCount = 0;
   for (let i = 0; i < imageCount; i++) {
+    const imageUrl = job.output_images[i];
     const caption = `Image ${i + 1} of ${imageCount}`;
     let sent = false;
 
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        await ctx.api.sendPhoto(chatId, selfieFileId, { caption });
+        // Send the generated image URL as a photo
+        await ctx.api.sendPhoto(chatId, imageUrl, { caption });
         sent = true;
         sentCount++;
         break;
