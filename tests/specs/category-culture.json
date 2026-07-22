@@ -1,0 +1,18 @@
+[
+  {
+    "name": "Culture category without selfie asks for selfie",
+    "steps": [
+      {
+        "send": { "callback": "category:culture" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Please upload a selfie first, then I'll apply the Culture style!"
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

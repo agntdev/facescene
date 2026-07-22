@@ -16,14 +16,13 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY ?? "";
 /** Style prompt templates for each category */
 const CATEGORY_PROMPTS: Record<string, string> = {
   love: "romantic portrait with soft pink lighting, heart-shaped bokeh, dreamy atmosphere, love theme",
-  nature: "portrait in a lush natural setting, surrounded by greenery, flowers, and natural light",
-  fantasy: "fantasy portrait with magical elements, ethereal glow, mystical atmosphere, fantasy art style",
-  vintage: "vintage-style portrait with film grain, warm sepia tones, retro aesthetic, classic photography",
-  cyberpunk: "cyberpunk portrait with neon lights, futuristic cityscape, high-tech low-life aesthetic",
-  artistic: "artistic portrait with painterly brushstrokes, fine art photography, creative composition",
-  professional: "professional headshot with clean background, studio lighting, polished business portrait",
-  glamour: "glamorous portrait with dramatic lighting, Hollywood style, elegant and sophisticated",
-  fun: "fun and playful portrait with vibrant colors, energetic mood, creative and whimsical",
+  fashion: "high-fashion portrait with editorial styling, dramatic lighting, magazine-cover aesthetic",
+  lifestyle: "lifestyle portrait in a natural setting, candid feel, warm and authentic atmosphere",
+  culture: "culturally-inspired portrait with traditional elements, rich colors, artistic composition",
+  dream: "ethereal dreamlike portrait with soft focus, surreal lighting, fantasy atmosphere",
+  social_media: "trendy social media style portrait, vibrant colors, Instagram-worthy composition",
+  secret: "mysterious and intriguing portrait with dramatic shadows, moody lighting, enigmatic vibe",
+  random: "creative portrait with unexpected elements, unique composition, artistic surprise",
 };
 
 export interface GenerationResult {
@@ -48,6 +47,7 @@ export async function generateImages(
   customPrompt: string | undefined,
   imageCount: number,
   downloadFile: (fileId: string) => Promise<Buffer>,
+  retryAttempt = 0,
 ): Promise<GenerationResult> {
   if (!OPENROUTER_API_KEY) {
     return {
@@ -66,6 +66,9 @@ export async function generateImages(
     const stylePrompt = customPrompt || CATEGORY_PROMPTS[category ?? ""] || "styled portrait";
 
     // Build the face-swap prompt
+    const retryNote = retryAttempt > 0
+      ? `\nIMPORTANT: This is attempt ${retryAttempt + 1}. The previous output was too similar to the source. Increase creative variation while preserving facial identity.`
+      : '';
     const prompt = `You are an expert portrait photographer and face-swap specialist.
 
 Given a source selfie, generate a new photorealistic portrait that:
@@ -80,7 +83,7 @@ The output should be a professional-grade face-swapped portrait where:
 - The scene, lighting, and style match the prompt description
 - The image is photorealistic with proper color grading
 - The resolution meets the product requirement (>=1024px)
-
+${retryNote}
 Generate exactly ${imageCount} variations of this styled portrait.`;
 
     // Call OpenRouter API

@@ -3,27 +3,24 @@ import type { Ctx } from "../bot.js";
 import { mainMenuKeyboard, registerMainMenuItem } from "../toolkit/index.js";
 import { getDomainStore } from "../storage.js";
 
-// Register all 9 category buttons for the 3x3 grid on /start.
 const CATEGORIES = [
   { label: "❤️ Love", data: "category:love", order: 10 },
-  { label: "🌿 Nature", data: "category:nature", order: 11 },
-  { label: "✨ Fantasy", data: "category:fantasy", order: 12 },
-  { label: "🎞 Vintage", data: "category:vintage", order: 13 },
-  { label: "🤖 Cyberpunk", data: "category:cyberpunk", order: 14 },
-  { label: "🎨 Artistic", data: "category:artistic", order: 15 },
-  { label: "💼 Professional", data: "category:professional", order: 16 },
-  { label: "💄 Glamour", data: "category:glamour", order: 17 },
-  { label: "🎉 Fun", data: "category:fun", order: 18 },
+  { label: "👗 Fashion", data: "category:fashion", order: 11 },
+  { label: "🌿 Lifestyle", data: "category:lifestyle", order: 12 },
+  { label: "🎭 Culture", data: "category:culture", order: 13 },
+  { label: "🌙 Dream", data: "category:dream", order: 14 },
+  { label: "📱 Social Media", data: "category:social_media", order: 15 },
+  { label: "🔮 Secret", data: "category:secret", order: 16 },
+  { label: "🎲 Random", data: "category:random", order: 17 },
 ];
 
 for (const cat of CATEGORIES) {
   registerMainMenuItem(cat);
 }
 
-// Also register the Upload New Selfie button.
 registerMainMenuItem({ label: "📷 Upload Selfie", data: "action:replace_selfie", order: 5 });
 
-const WELCOME = "👋 Welcome to SelfieStyle! Upload a selfie, then pick a style below to transform it.";
+const WELCOME = "👋 Welcome to SelfieStyle! Please upload a selfie first, then pick a style below.";
 
 const composer = new Composer<Ctx>();
 

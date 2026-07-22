@@ -8,7 +8,7 @@
           {
             "method": "sendMessage",
             "payload": {
-              "text": "📸 Send me a selfie first, and I'll apply the Love style to it!"
+              "text": "Please upload a selfie first, then I'll apply the Love style!"
             }
           }
         ]

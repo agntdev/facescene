@@ -11,6 +11,7 @@ const HELP =
   "2. Pick a style from the menu\n" +
   "3. Choose how many images to generate\n" +
   "4. Download your styled images!\n\n" +
+  "Styles: Love, Fashion, Lifestyle, Culture, Dream, Social Media, Secret, Random.\n\n" +
   "It's completely free — generate as many as you like.";
 
 const backToMenu = inlineKeyboard([[inlineButton("⬅️ Back to menu", "menu:main")]]);

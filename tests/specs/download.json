@@ -11,7 +11,7 @@
           },
           {
             "method": "editMessageText",
-            "payload": { "text": "⚠️ Images not ready yet. Try again in a moment." }
+            "payload": { "text": "Images not ready yet. Try again in a moment." }
           }
         ]
       }
